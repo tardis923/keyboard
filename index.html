@@ -29,8 +29,6 @@
     padding:8px 12px 10px;
     gap:10px;
   }
-
-  /* ===== 顶部工具条 ===== */
   header{
     display:flex;align-items:center;gap:14px;flex-wrap:wrap;
     flex:0 0 auto;
@@ -57,8 +55,6 @@
     background:linear-gradient(180deg,#ffd166,#f5a623);
     color:#221700;border-color:#ffe6a8;font-weight:700;
   }
-
-  /* ===== 键盘主区 ===== */
   main{
     flex:1 1 auto;
     display:flex;align-items:center;justify-content:center;
@@ -71,7 +67,6 @@
     grid-template-rows:repeat(6,var(--u));
     touch-action:none;
   }
-
   .key{
     position:relative;
     margin:1.5px;
@@ -99,7 +94,6 @@
   .key.dual{font-size:calc(var(--u)*0.26);}
   .key .lab{pointer-events:none;}
 
-  /* 按下高亮 */
   .key.active{
     background:linear-gradient(180deg,#ffe08a,#ffb020)!important;
     color:#1a1200!important;
@@ -114,9 +108,6 @@
     color:#6ee7b7;
   }
 
-  /* ============================================================
-     ★ F、J、小键盘 5 的凸起横线（和真实键盘一样）
-     ============================================================ */
   .key.homing::after{
     content:'';
     position:absolute;
@@ -139,8 +130,6 @@
     pointer-events:none;
     transition:background .1s, box-shadow .1s;
   }
-
-  /* 按下时横线变成深棕金色，在金色键帽上依然清晰 */
   .key.homing.active::after{
     background:linear-gradient(180deg,
                 #a07918 0%,
@@ -152,7 +141,6 @@
       inset 0 -1px 1px rgba(0,0,0,.45);
   }
 
-  /* ===== Shift 高亮双字符键上方符号 ===== */
   body.shift-on .key.dual{
     background:linear-gradient(180deg,#3a2f14,#241b08);
     border-color:#8a6520;
@@ -171,13 +159,11 @@
     transform:scale(.9);
   }
 
-  /* ===== 分区着色 ===== */
   body.zone-mode .key[data-zone="fn"]  {background:linear-gradient(180deg,#4c3d7a,#312656);border-color:#6b5aa0;}
   body.zone-mode .key[data-zone="main"]{background:linear-gradient(180deg,#1f3f68,#152c4b);border-color:#2f5f96;}
   body.zone-mode .key[data-zone="edit"]{background:linear-gradient(180deg,#1e5642,#123a2c);border-color:#2c7d61;}
   body.zone-mode .key[data-zone="num"] {background:linear-gradient(180deg,#6b4520,#4a2f15);border-color:#9c6a33;}
 
-  /* ===== 分区名称标签 ===== */
   .zone-label{
     display:none;
     pointer-events:none;
@@ -244,7 +230,6 @@
     letter-spacing:calc(var(--u)*0.03);
   }
 
-  /* ===== 右上角指示灯 ===== */
   .leds{
     grid-column:77 / span 16;grid-row:1 / span 1;
     margin:3px 2px;
@@ -280,7 +265,6 @@
   }
   .led-item.on .led-lab{color:#7ef0a8;}
 
-  /* ===== 指法着色 ===== */
   body.finger-mode .key[data-finger="L5"]{background:linear-gradient(180deg,#9b2c2c,#6b1d1d);border-color:#c53939;}
   body.finger-mode .key[data-finger="L4"]{background:linear-gradient(180deg,#9a4310,#6b2e0b);border-color:#c25a1c;}
   body.finger-mode .key[data-finger="L3"]{background:linear-gradient(180deg,#8a6412,#5e430b);border-color:#b8862a;}
@@ -291,7 +275,6 @@
   body.finger-mode .key[data-finger="R5"]{background:linear-gradient(180deg,#9b2063,#6b1442);border-color:#c93683;}
   body.finger-mode .key[data-finger="TH"]{background:linear-gradient(180deg,#4a5568,#2d3542);border-color:#6b7a91;}
 
-  /* ===== 输入的文字（大字显示区） ===== */
   .typing-area{
     flex:0 0 auto;
     height:112px;
@@ -327,7 +310,6 @@
     letter-spacing:0;text-shadow:none;
   }
 
-  /* ===== 底部状态栏 ===== */
   footer{flex:0 0 auto;display:flex;}
   .status{
     flex:1;display:flex;align-items:center;gap:22px;
@@ -344,7 +326,22 @@
     border:2px solid #33405c;border-radius:12px;
     text-shadow:0 0 18px rgba(255,176,32,.55);
     padding:0 16px;white-space:nowrap;
+    transition:color .12s, border-color .12s, text-shadow .12s;
   }
+  .bigkey.blocked{
+    color:#7f8ea6;
+    border-color:#4a5570;
+    text-shadow:none;
+  }
+  .bigkey.blocked::after{
+    content:'（未输入）';
+    font-size:16px;
+    font-weight:500;
+    color:#7f8ea6;
+    margin-left:8px;
+    letter-spacing:0;
+  }
+
   .meta{display:flex;gap:26px;flex-wrap:wrap;font-size:15px;color:#8ea2c0;}
   .meta b{color:#e6edf7;font-weight:700;font-family:Consolas,Monaco,monospace;font-size:16px;margin-left:6px;}
   .meta .finger b{color:#7dd3fc;font-family:inherit;}
@@ -384,7 +381,6 @@
 
   <main><div class="board" id="board"></div></main>
 
-  <!-- 输入的文字（大字显示） -->
   <section class="typing-area">
     <span class="typing-label">输入的文字</span>
     <div class="typing-text" id="typingText"
@@ -412,7 +408,6 @@
    104 键布局数据
    ============================================================ */
 const LAYOUT = [
-  /* 第 1 行：功能键区 */
   {c:'Escape',      l:'Esc',   col:1,  row:1, w:4, z:'fn'},
   {c:'F1',          l:'F1',    col:9,  row:1, w:4, z:'fn'},
   {c:'F2',          l:'F2',    col:13, row:1, w:4, z:'fn'},
@@ -430,7 +425,6 @@ const LAYOUT = [
   {c:'ScrollLock',  l:'ScrLk', col:67, row:1, w:4, z:'fn'},
   {c:'Pause',       l:'Pause', col:71, row:1, w:4, z:'fn'},
 
-  /* 第 2 行：数字行 */
   {c:'Backquote',  t:'~', b:'`', col:1,  row:2, w:4, z:'main', f:'L5'},
   {c:'Digit1',     t:'!', b:'1', col:5,  row:2, w:4, z:'main', f:'L5'},
   {c:'Digit2',     t:'@', b:'2', col:9,  row:2, w:4, z:'main', f:'L4'},
@@ -446,7 +440,6 @@ const LAYOUT = [
   {c:'Equal',      t:'+', b:'=', col:49, row:2, w:4, z:'main', f:'R5'},
   {c:'Backspace',  l:'Backspace', col:53, row:2, w:8, z:'main', f:'R5'},
 
-  /* 第 3 行：Tab 行 */
   {c:'Tab',          l:'Tab',  col:1,  row:3, w:6, z:'main', f:'L5'},
   {c:'KeyQ',         l:'Q',    col:7,  row:3, w:4, z:'main', f:'L5'},
   {c:'KeyW',         l:'W',    col:11, row:3, w:4, z:'main', f:'L4'},
@@ -462,7 +455,6 @@ const LAYOUT = [
   {c:'BracketRight', t:'}', b:']', col:51, row:3, w:4, z:'main', f:'R5'},
   {c:'Backslash',    t:'|', b:'\\', col:55, row:3, w:6, z:'main', f:'R5'},
 
-  /* 第 4 行：Caps 行 */
   {c:'CapsLock',   l:'Caps Lock', col:1,  row:4, w:7, z:'main', f:'L5'},
   {c:'KeyA',       l:'A', col:8,  row:4, w:4, z:'main', f:'L5'},
   {c:'KeyS',       l:'S', col:12, row:4, w:4, z:'main', f:'L4'},
@@ -477,7 +469,6 @@ const LAYOUT = [
   {c:'Quote',      t:'"', b:"'", col:48, row:4, w:4, z:'main', f:'R5'},
   {c:'Enter',      l:'Enter',   col:52, row:4, w:9, z:'main', f:'R5'},
 
-  /* 第 5 行：Shift 行 */
   {c:'ShiftLeft',  l:'Shift', col:1,  row:5, w:9,  z:'main', f:'L5'},
   {c:'KeyZ',       l:'Z', col:10, row:5, w:4, z:'main', f:'L5'},
   {c:'KeyX',       l:'X', col:14, row:5, w:4, z:'main', f:'L4'},
@@ -491,7 +482,6 @@ const LAYOUT = [
   {c:'Slash',      t:'?', b:'/', col:46, row:5, w:4, z:'main', f:'R5'},
   {c:'ShiftRight', l:'Shift', col:50, row:5, w:11, z:'main', f:'R5'},
 
-  /* 第 6 行：Ctrl 行 */
   {c:'ControlLeft',  l:'Ctrl', col:1,  row:6, w:5, z:'main', f:'L5'},
   {c:'MetaLeft',     l:'Win',  col:6,  row:6, w:5, z:'main', f:'L5'},
   {c:'AltLeft',      l:'Alt',  col:11, row:6, w:5, z:'main', f:'L5'},
@@ -501,7 +491,6 @@ const LAYOUT = [
   {c:'ContextMenu',  l:'Menu', col:51, row:6, w:5, z:'main', f:'R5'},
   {c:'ControlRight', l:'Ctrl', col:56, row:6, w:5, z:'main', f:'R5'},
 
-  /* 编辑键区 */
   {c:'Insert',    l:'Insert', col:63, row:2, w:4, z:'edit'},
   {c:'Home',      l:'Home',   col:67, row:2, w:4, z:'edit'},
   {c:'PageUp',    l:'PgUp',   col:71, row:2, w:4, z:'edit'},
@@ -513,7 +502,6 @@ const LAYOUT = [
   {c:'ArrowDown', l:'↓',      col:67, row:6, w:4, z:'edit'},
   {c:'ArrowRight',l:'→',      col:71, row:6, w:4, z:'edit'},
 
-  /* 小键盘区 */
   {c:'NumLock',        l:'Num',   col:77, row:2, w:4, z:'num'},
   {c:'NumpadDivide',   l:'/',     col:81, row:2, w:4, z:'num'},
   {c:'NumpadMultiply', l:'*',     col:85, row:2, w:4, z:'num'},
@@ -534,6 +522,12 @@ const LAYOUT = [
 ];
 
 const HOMING_KEYS = ['KeyF', 'KeyJ', 'Numpad5'];
+
+const NUMPAD_DIGIT_KEYS = [
+  'Numpad0','Numpad1','Numpad2','Numpad3','Numpad4',
+  'Numpad5','Numpad6','Numpad7','Numpad8','Numpad9',
+  'NumpadDecimal'
+];
 
 const ZONE_LABELS = [
   { cls:'zone-fn',   text:'功能键区' },
@@ -569,10 +563,7 @@ const esc = s => String(s).replace(/[&<>"']/g, m => (
   {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]
 ));
 
-/* ============================================================
-   全局状态
-   ============================================================ */
-let touchEnabled = true;   /* ★ 点击响应开关 */
+let touchEnabled = true;
 
 /* ============================================================
    构建键盘
@@ -586,7 +577,6 @@ const ledItems= {};
 function buildBoard(){
   const frag = document.createDocumentFragment();
 
-  /* 指示灯 */
   const ledsBox = document.createElement('div');
   ledsBox.className = 'leds';
   LED_DEFS.forEach(d => {
@@ -605,7 +595,6 @@ function buildBoard(){
   });
   frag.appendChild(ledsBox);
 
-  /* 按键 */
   LAYOUT.forEach(k => {
     const el = document.createElement('div');
     el.className = 'key';
@@ -635,7 +624,6 @@ function buildBoard(){
     keyInfo[k.c] = k;
   });
 
-  /* 分区名称标签 */
   ZONE_LABELS.forEach(z => {
     const el = document.createElement('div');
     el.className = 'zone-label ' + z.cls;
@@ -809,8 +797,13 @@ function fingerFor(code){
   return null;
 }
 
-function updateStatus(name, code, keyLabel){
+function isBlockedByNumLock(code){
+  return !lockState.NumLock && NUMPAD_DIGIT_KEYS.includes(code);
+}
+
+function updateStatus(name, code, keyLabel, blocked){
   bigKey.textContent  = name  || '—';
+  bigKey.classList.toggle('blocked', !!blocked);
   outCode.textContent = code  || '—';
   outKey.textContent  = keyLabel || '—';
   const f = fingerFor(code);
@@ -823,11 +816,27 @@ function updateStatus(name, code, keyLabel){
   }
 }
 
+/* ============================================================
+   实体按键的显示名
+   ============================================================ */
 function displayName(e){
   if (DISPLAY_NAME[e.code]) return DISPLAY_NAME[e.code];
   const k = e.key;
   if (k === ' ') return 'Space';
   if (k && k.length === 1) return k;
+
+  if (isBlockedByNumLock(e.code)){
+    const info = keyInfo[e.code];
+    if (info){
+      if (info.l !== undefined && info.l !== '') return info.l;
+      return info.b;
+    }
+  }
+
+  if (k && k.length > 1 &&
+      k !== 'Unidentified' && k !== 'Dead' && k !== 'Process'){
+    return k;
+  }
   const info = keyInfo[e.code];
   if (info){
     if (info.l !== undefined) return info.l === '' ? 'Space' : info.l;
@@ -837,7 +846,7 @@ function displayName(e){
 }
 
 /* ============================================================
-   虚拟按键：根据 Shift / Caps 计算实际输出
+   虚拟按键：根据 Shift / Caps / NumLock 计算实际输出
    ============================================================ */
 function currentShift(){
   return virtualShift || shiftDown;
@@ -851,6 +860,8 @@ function virtualOutput(code){
 
   const info = keyInfo[code];
   if (!info) return null;
+
+  if (isBlockedByNumLock(code)) return null;
 
   const shift = currentShift();
   const caps  = lockState.CapsLock;
@@ -872,6 +883,11 @@ function virtualDisplayName(code){
   const info = keyInfo[code];
   if (!info) return code;
 
+  if (isBlockedByNumLock(code)){
+    if (info.l !== undefined && info.l !== '') return info.l;
+    return info.b;
+  }
+
   const shift = currentShift();
   const caps  = lockState.CapsLock;
 
@@ -888,7 +904,7 @@ const virtualPressed = new Set();
 
 function bindVirtualKey(el, code){
   el.addEventListener('pointerdown', ev => {
-    if (!touchEnabled) return;                             /* ★ 开关 */
+    if (!touchEnabled) return;
     if (ev.pointerType === 'mouse' && ev.button !== 0) return;
     ev.preventDefault();
     if (virtualPressed.has(code)) return;
@@ -908,7 +924,6 @@ function bindVirtualKey(el, code){
 }
 
 function virtualPress(code){
-  /* Shift：切换式 */
   if (code === 'ShiftLeft' || code === 'ShiftRight'){
     virtualShift = !virtualShift;
     updateShiftVisual();
@@ -917,7 +932,7 @@ function virtualPress(code){
       if (k) k.classList.toggle('active', virtualShift);
     });
     playKeySound('normal');
-    updateStatus('Shift', code, 'Shift');
+    updateStatus('Shift', code, 'Shift', false);
     return;
   }
 
@@ -927,7 +942,7 @@ function virtualPress(code){
   if (LOCK_CODES.includes(code)){
     toggleLock(code);
     playKeySound('lock');
-    updateStatus(DISPLAY_NAME[code] || code, code, DISPLAY_NAME[code] || code);
+    updateStatus(DISPLAY_NAME[code] || code, code, DISPLAY_NAME[code] || code, false);
     return;
   }
 
@@ -941,8 +956,9 @@ function virtualPress(code){
     appendTyped(out);
   }
 
+  const blocked = isBlockedByNumLock(code);
   const name = virtualDisplayName(code);
-  updateStatus(name, code, name);
+  updateStatus(name, code, name, blocked);
 }
 
 function virtualRelease(code){
@@ -951,7 +967,6 @@ function virtualRelease(code){
   if (el) el.classList.remove('active');
 }
 
-/* 兜底：全局 pointerup 清掉所有未释放的虚拟按下 */
 document.addEventListener('pointerup', () => {
   virtualPressed.forEach(code => {
     virtualPressed.delete(code);
@@ -959,14 +974,34 @@ document.addEventListener('pointerup', () => {
   });
 });
 
-/* 如果点击响应被关闭时正好有虚拟键按下，清掉高亮 */
+/* ============================================================
+   ★ 重置所有虚拟状态（关闭点击响应时调用）
+   ============================================================ */
 function clearVirtualPresses(){
+  /* 1. 重置虚拟 Shift 标志 */
+  virtualShift = false;
+  updateShiftVisual();
+
+  /* 2. 清除左右 Shift 键的高亮 */
+  ['ShiftLeft','ShiftRight'].forEach(c => {
+    const k = keyEls[c];
+    if (k) k.classList.remove('active');
+  });
+
+  /* 3. 清除其他被按下键的高亮 */
   virtualPressed.forEach(code => {
-    if (code === 'ShiftLeft' || code === 'ShiftRight') return;
     const el = keyEls[code];
     if (el) el.classList.remove('active');
   });
   virtualPressed.clear();
+
+  /* 4. 底部大屏恢复成“—”（避免残留未输入提示） */
+  bigKey.textContent = '—';
+  bigKey.classList.remove('blocked');
+  outCode.textContent = '—';
+  outKey.textContent = '—';
+  outFinger.textContent = '—';
+  outFinger.style.color = '#5b6b84';
 }
 
 /* ============================================================
@@ -1008,8 +1043,9 @@ document.addEventListener('keydown', e => {
     }
   }
 
+  const blocked = isBlockedByNumLock(e.code);
   const name = displayName(e);
-  updateStatus(name, e.code, e.key === ' ' ? 'Space' : e.key);
+  updateStatus(name, e.code, e.key === ' ' ? 'Space' : e.key, blocked);
 });
 
 document.addEventListener('keyup', e => {
@@ -1027,14 +1063,12 @@ window.addEventListener('blur', () => {
 /* ============================================================
    工具按钮
    ============================================================ */
-
-/* ★ 点击响应开关 */
 document.getElementById('btnTouch').addEventListener('click', function(){
   this.blur();
   touchEnabled = !touchEnabled;
   this.classList.toggle('on', touchEnabled);
   this.textContent = touchEnabled ? '👆 点击响应' : '🚫 点击关闭';
-  if (!touchEnabled) clearVirtualPresses();
+  if (!touchEnabled) clearVirtualPresses();   /* ★ 修复：重置虚拟 Shift 和高亮 */
 });
 
 document.getElementById('btnZone').addEventListener('click', function(){
@@ -1075,6 +1109,7 @@ document.getElementById('btnClear').addEventListener('click', function(){
   typed = '';
   updateTyping();
   bigKey.textContent = '—';
+  bigKey.classList.remove('blocked');
   outCode.textContent = '—';
   outKey.textContent = '—';
   outFinger.textContent = '—';
@@ -1082,10 +1117,6 @@ document.getElementById('btnClear').addEventListener('click', function(){
   Object.values(keyEls).forEach(el => el.classList.remove('active'));
   virtualShift = false;
   updateShiftVisual();
-  ['ShiftLeft','ShiftRight'].forEach(c => {
-    const k = keyEls[c];
-    if (k) k.classList.remove('active');
-  });
   virtualPressed.clear();
 });
 
