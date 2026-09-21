@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>104 键键盘演示</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --u:82px;
+    --txt:#e6edf7;
+    --keytop:#37415a;
+    --keybot:#252c3d;
+    --keyborder:#4b5772;
+  }
+  html,body{
+    height:100%;width:100%;
+    background:radial-gradient(circle at 50% 0%,#16203a 0%,#0b0f18 60%);
+    color:var(--txt);
+    font-family:"Microsoft YaHei","PingFang SC",system-ui,-apple-system,sans-serif;
+    overflow:hidden;
+    user-select:none;
+    -webkit-touch-callout:none;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .wrap{
+    height:100%;
+    display:flex;flex-direction:column;
+    padding:8px 12px 10px;
+    gap:10px;
+  }
+
+  /* ===== 顶部工具条 ===== */
+  header{
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    flex:0 0 auto;
+  }
+  h1{
+    font-size:20px;font-weight:700;letter-spacing:1px;
+    background:linear-gradient(90deg,#7dd3fc,#ffb020);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    white-space:nowrap;
+  }
+  .tools{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto;}
+  .tools button{
+    font-family:inherit;font-size:14px;
+    padding:6px 14px;border-radius:9px;cursor:pointer;
+    color:#cfe0f5;
+    background:linear-gradient(180deg,#2b3549,#1e2636);
+    border:1px solid #3d4a63;
+    border-bottom-width:3px;
+    transition:.12s;
+  }
+  .tools button:hover{background:linear-gradient(180deg,#374460,#26304a);color:#fff;}
+  .tools button:active{transform:translateY(2px);border-bottom-width:1px;}
+  .tools button.on{
+    background:linear-gradient(180deg,#ffd166,#f5a623);
+    color:#221700;border-color:#ffe6a8;font-weight:700;
+  }
+
+  /* ===== 键盘主区 ===== */
+  main{
+    flex:1 1 auto;
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;
+  }
+  .board{
+    position:relative;
+    display:grid;
+    grid-template-columns:repeat(92,calc(var(--u)/4));
+    grid-template-rows:repeat(6,var(--u));
+    touch-action:none;
+  }
+
+  .key{
+    position:relative;
+    margin:1.5px;
+    border-radius:calc(var(--u)*0.09);
+    background:linear-gradient(180deg,var(--keytop),var(--keybot));
+    border:1px solid var(--keyborder);
+    border-bottom:calc(var(--u)*0.05) solid #1b2231;
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    color:#dfe8f6;
+    line-height:1;
+    overflow:hidden;
+    transition:background .1s,color .1s,box-shadow .1s,transform .1s,border-color .1s;
+    text-align:center;
+    cursor:pointer;
+  }
+  .key .top{
+    font-size:1em;opacity:.62;line-height:1.05;
+    transition:opacity .15s,color .15s,text-shadow .15s,transform .15s;
+  }
+  .key .bot{
+    font-size:1em;line-height:1.05;
+    transition:opacity .15s,color .15s,transform .15s;
+  }
+  .key.dual{font-size:calc(var(--u)*0.26);}
+  .key .lab{pointer-events:none;}
+
+  /* 按下高亮 */
+  .key.active{
+    background:linear-gradient(180deg,#ffe08a,#ffb020)!important;
+    color:#1a1200!important;
+    border-color:#fff2c9!important;
+    border-bottom-width:1px!important;
+    box-shadow:0 0 22px rgba(255,176,32,.95),0 0 44px rgba(255,176,32,.5)!important;
+    transform:translateY(2px);
+    font-weight:700;
+  }
+  .key.locked{
+    box-shadow:inset 0 0 0 3px #34d399,0 0 14px rgba(52,211,153,.6);
+    color:#6ee7b7;
+  }
+
+  /* ============================================================
+     ★ F、J、小键盘 5 的凸起横线（和真实键盘一样）
+     ============================================================ */
+  .key.homing::after{
+    content:'';
+    position:absolute;
+    left:50%;
+    bottom:14%;
+    transform:translateX(-50%);
+    width:calc(var(--u)*0.30);
+    height:calc(var(--u)*0.05);
+    border-radius:calc(var(--u)*0.025);
+    background:linear-gradient(180deg,
+                #e8eff9 0%,
+                #c2cdde 40%,
+                #8a97ad 75%,
+                #5a6578 100%);
+    box-shadow:
+      0 1px 1.5px rgba(0,0,0,.55),
+      0 -0.5px 0.5px rgba(255,255,255,.10),
+      inset 0 1px 0.5px rgba(255,255,255,.75),
+      inset 0 -1px 1px rgba(0,0,0,.32);
+    pointer-events:none;
+    transition:background .1s, box-shadow .1s;
+  }
+
+  /* 按下时横线变成深棕金色，在金色键帽上依然清晰 */
+  .key.homing.active::after{
+    background:linear-gradient(180deg,
+                #a07918 0%,
+                #7a5a12 40%,
+                #4a3508 100%);
+    box-shadow:
+      0 1px 1.5px rgba(255,255,255,.45),
+      inset 0 1px 0.5px rgba(255,240,200,.55),
+      inset 0 -1px 1px rgba(0,0,0,.45);
+  }
+
+  /* ===== Shift 高亮双字符键上方符号 ===== */
+  body.shift-on .key.dual{
+    background:linear-gradient(180deg,#3a2f14,#241b08);
+    border-color:#8a6520;
+  }
+  body.shift-on .key.dual .top{
+    opacity:1;
+    font-weight:900;
+    color:#ffe9a8;
+    text-shadow:0 0 8px #ffd166,
+                0 0 20px rgba(255,209,102,.95),
+                0 0 40px rgba(255,176,32,.6);
+    transform:scale(1.08);
+  }
+  body.shift-on .key.dual .bot{
+    opacity:.22;
+    transform:scale(.9);
+  }
+
+  /* ===== 分区着色 ===== */
+  body.zone-mode .key[data-zone="fn"]  {background:linear-gradient(180deg,#4c3d7a,#312656);border-color:#6b5aa0;}
+  body.zone-mode .key[data-zone="main"]{background:linear-gradient(180deg,#1f3f68,#152c4b);border-color:#2f5f96;}
+  body.zone-mode .key[data-zone="edit"]{background:linear-gradient(180deg,#1e5642,#123a2c);border-color:#2c7d61;}
+  body.zone-mode .key[data-zone="num"] {background:linear-gradient(180deg,#6b4520,#4a2f15);border-color:#9c6a33;}
+
+  /* ===== 分区名称标签 ===== */
+  .zone-label{
+    display:none;
+    pointer-events:none;
+    z-index:30;
+    align-items:center;
+    justify-content:center;
+    overflow:visible;
+  }
+  body.zone-mode .zone-label{display:flex;}
+  .zone-label span{
+    display:inline-block;
+    padding:calc(var(--u)*0.06) calc(var(--u)*0.24);
+    border-radius:999px;
+    background:rgba(6,10,18,.82);
+    border:2px solid rgba(255,255,255,.42);
+    color:#fff;
+    font-weight:900;
+    letter-spacing:calc(var(--u)*0.045);
+    white-space:nowrap;
+    line-height:1;
+    text-shadow:0 0 14px rgba(255,255,255,.65);
+    box-shadow:0 4px 22px rgba(0,0,0,.7), inset 0 0 18px rgba(255,255,255,.06);
+    backdrop-filter:blur(3px);
+  }
+  .zone-fn{grid-column:1 / span 74;grid-row:1 / span 1;}
+  .zone-fn span{
+    font-size:calc(var(--u)*0.30);
+    border-color:rgba(180,160,255,.75);
+    text-shadow:0 0 14px rgba(180,160,255,.85);
+    box-shadow:0 4px 22px rgba(0,0,0,.7), 0 0 26px rgba(120,90,220,.45);
+  }
+  .zone-main{
+    grid-column:1 / span 61;grid-row:2 / span 5;
+    align-items:flex-start;padding-top:calc(var(--u)*0.9);
+  }
+  .zone-main span{
+    font-size:calc(var(--u)*0.44);
+    border-color:rgba(120,180,255,.8);
+    text-shadow:0 0 16px rgba(120,180,255,.9);
+    box-shadow:0 4px 22px rgba(0,0,0,.75), 0 0 30px rgba(60,120,230,.45);
+  }
+  .zone-edit{
+    grid-column:63 / span 13;grid-row:2 / span 5;
+    align-items:flex-start;padding-top:calc(var(--u)*1.3);
+  }
+  .zone-edit span{
+    font-size:calc(var(--u)*0.24);
+    padding:calc(var(--u)*0.055) calc(var(--u)*0.16);
+    border-color:rgba(110,230,180,.8);
+    text-shadow:0 0 14px rgba(110,230,180,.9);
+    box-shadow:0 4px 22px rgba(0,0,0,.75), 0 0 26px rgba(30,170,110,.45);
+    letter-spacing:calc(var(--u)*0.03);
+  }
+  .zone-num{
+    grid-column:77 / span 17;grid-row:2 / span 5;
+    align-items:flex-start;padding-top:calc(var(--u)*1.3);
+  }
+  .zone-num span{
+    font-size:calc(var(--u)*0.24);
+    padding:calc(var(--u)*0.055) calc(var(--u)*0.16);
+    border-color:rgba(255,190,110,.85);
+    text-shadow:0 0 14px rgba(255,190,110,.9);
+    box-shadow:0 4px 22px rgba(0,0,0,.75), 0 0 26px rgba(220,140,40,.45);
+    letter-spacing:calc(var(--u)*0.03);
+  }
+
+  /* ===== 右上角指示灯 ===== */
+  .leds{
+    grid-column:77 / span 16;grid-row:1 / span 1;
+    margin:3px 2px;
+    display:flex;align-items:center;justify-content:space-around;
+    gap:6px;padding:0 10px;
+    background:linear-gradient(180deg,#141a28,#0b101a);
+    border:1px solid #33405c;border-radius:12px;
+    box-shadow:inset 0 2px 8px rgba(0,0,0,.65);
+  }
+  .led-item{
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    gap:calc(var(--u)*0.07);white-space:nowrap;
+  }
+  .led{
+    width:calc(var(--u)*0.24);height:calc(var(--u)*0.24);
+    border-radius:50%;
+    background:#161e2b;border:1px solid #3a4761;
+    box-shadow:inset 0 0 6px rgba(0,0,0,.9), inset 0 1px 2px rgba(255,255,255,.06);
+    transition:background .12s, box-shadow .12s, border-color .12s;
+  }
+  .led-item.on .led{
+    background:radial-gradient(circle at 35% 32%, #d7ffe6, #34d399 55%, #12a150);
+    border-color:#9df3bf;
+    box-shadow:0 0 calc(var(--u)*0.14) #22c55e,
+               0 0 calc(var(--u)*0.3) rgba(34,197,94,.75),
+               inset 0 0 4px rgba(255,255,255,.7);
+  }
+  .led-lab{
+    font-size:calc(var(--u)*0.155);
+    color:#5f6f88;letter-spacing:.4px;
+    transition:color .12s;line-height:1;
+  }
+  .led-item.on .led-lab{color:#7ef0a8;}
+
+  /* ===== 指法着色 ===== */
+  body.finger-mode .key[data-finger="L5"]{background:linear-gradient(180deg,#9b2c2c,#6b1d1d);border-color:#c53939;}
+  body.finger-mode .key[data-finger="L4"]{background:linear-gradient(180deg,#9a4310,#6b2e0b);border-color:#c25a1c;}
+  body.finger-mode .key[data-finger="L3"]{background:linear-gradient(180deg,#8a6412,#5e430b);border-color:#b8862a;}
+  body.finger-mode .key[data-finger="L2"]{background:linear-gradient(180deg,#1a6b3c,#0f4526);border-color:#2b9e5c;}
+  body.finger-mode .key[data-finger="R2"]{background:linear-gradient(180deg,#156b7a,#0c4450);border-color:#22a0b4;}
+  body.finger-mode .key[data-finger="R3"]{background:linear-gradient(180deg,#1e4a9e,#122f66);border-color:#3568c9;}
+  body.finger-mode .key[data-finger="R4"]{background:linear-gradient(180deg,#5b2a9e,#3a1a66);border-color:#7d47c9;}
+  body.finger-mode .key[data-finger="R5"]{background:linear-gradient(180deg,#9b2063,#6b1442);border-color:#c93683;}
+  body.finger-mode .key[data-finger="TH"]{background:linear-gradient(180deg,#4a5568,#2d3542);border-color:#6b7a91;}
+
+  /* ===== 输入的文字（大字显示区） ===== */
+  .typing-area{
+    flex:0 0 auto;
+    height:112px;
+    display:flex;align-items:center;gap:22px;
+    padding:8px 26px;
+    background:linear-gradient(180deg,#141a28,#0a0f18);
+    border:2px solid #33405c;border-radius:16px;
+    box-shadow:inset 0 2px 14px rgba(0,0,0,.65),0 0 0 1px rgba(255,255,255,.02);
+  }
+  .typing-label{
+    flex:0 0 auto;
+    font-size:24px;font-weight:800;
+    color:#7f92b0;letter-spacing:2px;white-space:nowrap;
+  }
+  .typing-text{
+    flex:1 1 auto;height:100%;
+    display:flex;align-items:center;
+    font-size:56px;line-height:1;font-weight:800;
+    color:#ffd166;
+    font-family:Consolas,Monaco,"Courier New",monospace;
+    white-space:pre;
+    overflow-x:auto;overflow-y:hidden;
+    letter-spacing:2px;
+    text-shadow:0 0 26px rgba(255,209,102,.5);
+    scrollbar-width:thin;scrollbar-color:#3a4761 transparent;
+  }
+  .typing-text::-webkit-scrollbar{height:6px;}
+  .typing-text::-webkit-scrollbar-track{background:transparent;}
+  .typing-text::-webkit-scrollbar-thumb{background:#3a4761;border-radius:3px;}
+  .typing-text:empty::before{
+    content:attr(data-placeholder);
+    color:#37445c;font-size:30px;font-weight:400;
+    letter-spacing:0;text-shadow:none;
+  }
+
+  /* ===== 底部状态栏 ===== */
+  footer{flex:0 0 auto;display:flex;}
+  .status{
+    flex:1;display:flex;align-items:center;gap:22px;
+    background:rgba(30,40,60,.55);
+    border:1px solid #2b3852;border-radius:14px;
+    padding:6px 18px;
+  }
+  .bigkey{
+    min-width:180px;height:60px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:32px;font-weight:800;letter-spacing:1px;
+    color:#ffb020;
+    background:linear-gradient(180deg,#141a28,#0d121c);
+    border:2px solid #33405c;border-radius:12px;
+    text-shadow:0 0 18px rgba(255,176,32,.55);
+    padding:0 16px;white-space:nowrap;
+  }
+  .meta{display:flex;gap:26px;flex-wrap:wrap;font-size:15px;color:#8ea2c0;}
+  .meta b{color:#e6edf7;font-weight:700;font-family:Consolas,Monaco,monospace;font-size:16px;margin-left:6px;}
+  .meta .finger b{color:#7dd3fc;font-family:inherit;}
+
+  .mods{
+    display:flex;gap:8px;align-items:center;
+    margin-left:auto;font-size:13px;color:#7f92b0;
+  }
+  .mod-badge{
+    padding:3px 10px;border-radius:8px;
+    background:#1c2537;border:1px solid #33415c;
+    color:#5f6f88;font-weight:700;transition:.12s;
+  }
+  .mod-badge.on{
+    background:#3a2c10;border-color:#8a6520;color:#ffcb63;
+    box-shadow:0 0 12px rgba(255,176,32,.45);
+  }
+  .mod-badge.caps.on{
+    background:#0f3a2a;border-color:#1f7a55;color:#7ef0a8;
+    box-shadow:0 0 12px rgba(52,211,153,.45);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>⌨ 104 键键盘演示</h1>
+    <div class="tools">
+      <button id="btnTouch" class="on">👆 点击响应</button>
+      <button id="btnZone">分区着色</button>
+      <button id="btnFinger">指法着色</button>
+      <button id="btnSound">🔊 音效开</button>
+      <button id="btnFull">全屏演示</button>
+      <button id="btnClear">清空输入</button>
+    </div>
+  </header>
+
+  <main><div class="board" id="board"></div></main>
+
+  <!-- 输入的文字（大字显示） -->
+  <section class="typing-area">
+    <span class="typing-label">输入的文字</span>
+    <div class="typing-text" id="typingText"
+         data-placeholder="点击键盘上的按键，这里会显示输入的文字……"></div>
+  </section>
+
+  <footer>
+    <div class="status">
+      <div class="bigkey" id="bigKey">—</div>
+      <div class="meta">
+        <div>event.code<b id="outCode">—</b></div>
+        <div>event.key<b id="outKey">—</b></div>
+        <div class="finger">建议手指<b id="outFinger">—</b></div>
+      </div>
+      <div class="mods">
+        <span class="mod-badge" id="badgeShift">SHIFT</span>
+        <span class="mod-badge caps" id="badgeCaps">CAPS</span>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<script>
+/* ============================================================
+   104 键布局数据
+   ============================================================ */
+const LAYOUT = [
+  /* 第 1 行：功能键区 */
+  {c:'Escape',      l:'Esc',   col:1,  row:1, w:4, z:'fn'},
+  {c:'F1',          l:'F1',    col:9,  row:1, w:4, z:'fn'},
+  {c:'F2',          l:'F2',    col:13, row:1, w:4, z:'fn'},
+  {c:'F3',          l:'F3',    col:17, row:1, w:4, z:'fn'},
+  {c:'F4',          l:'F4',    col:21, row:1, w:4, z:'fn'},
+  {c:'F5',          l:'F5',    col:27, row:1, w:4, z:'fn'},
+  {c:'F6',          l:'F6',    col:31, row:1, w:4, z:'fn'},
+  {c:'F7',          l:'F7',    col:35, row:1, w:4, z:'fn'},
+  {c:'F8',          l:'F8',    col:39, row:1, w:4, z:'fn'},
+  {c:'F9',          l:'F9',    col:45, row:1, w:4, z:'fn'},
+  {c:'F10',         l:'F10',   col:49, row:1, w:4, z:'fn'},
+  {c:'F11',         l:'F11',   col:53, row:1, w:4, z:'fn'},
+  {c:'F12',         l:'F12',   col:57, row:1, w:4, z:'fn'},
+  {c:'PrintScreen', l:'PrtSc', col:63, row:1, w:4, z:'fn'},
+  {c:'ScrollLock',  l:'ScrLk', col:67, row:1, w:4, z:'fn'},
+  {c:'Pause',       l:'Pause', col:71, row:1, w:4, z:'fn'},
+
+  /* 第 2 行：数字行 */
+  {c:'Backquote',  t:'~', b:'`', col:1,  row:2, w:4, z:'main', f:'L5'},
+  {c:'Digit1',     t:'!', b:'1', col:5,  row:2, w:4, z:'main', f:'L5'},
+  {c:'Digit2',     t:'@', b:'2', col:9,  row:2, w:4, z:'main', f:'L4'},
+  {c:'Digit3',     t:'#', b:'3', col:13, row:2, w:4, z:'main', f:'L3'},
+  {c:'Digit4',     t:'$', b:'4', col:17, row:2, w:4, z:'main', f:'L2'},
+  {c:'Digit5',     t:'%', b:'5', col:21, row:2, w:4, z:'main', f:'L2'},
+  {c:'Digit6',     t:'^', b:'6', col:25, row:2, w:4, z:'main', f:'R2'},
+  {c:'Digit7',     t:'&', b:'7', col:29, row:2, w:4, z:'main', f:'R2'},
+  {c:'Digit8',     t:'*', b:'8', col:33, row:2, w:4, z:'main', f:'R3'},
+  {c:'Digit9',     t:'(', b:'9', col:37, row:2, w:4, z:'main', f:'R4'},
+  {c:'Digit0',     t:')', b:'0', col:41, row:2, w:4, z:'main', f:'R5'},
+  {c:'Minus',      t:'_', b:'-', col:45, row:2, w:4, z:'main', f:'R5'},
+  {c:'Equal',      t:'+', b:'=', col:49, row:2, w:4, z:'main', f:'R5'},
+  {c:'Backspace',  l:'Backspace', col:53, row:2, w:8, z:'main', f:'R5'},
+
+  /* 第 3 行：Tab 行 */
+  {c:'Tab',          l:'Tab',  col:1,  row:3, w:6, z:'main', f:'L5'},
+  {c:'KeyQ',         l:'Q',    col:7,  row:3, w:4, z:'main', f:'L5'},
+  {c:'KeyW',         l:'W',    col:11, row:3, w:4, z:'main', f:'L4'},
+  {c:'KeyE',         l:'E',    col:15, row:3, w:4, z:'main', f:'L3'},
+  {c:'KeyR',         l:'R',    col:19, row:3, w:4, z:'main', f:'L2'},
+  {c:'KeyT',         l:'T',    col:23, row:3, w:4, z:'main', f:'L2'},
+  {c:'KeyY',         l:'Y',    col:27, row:3, w:4, z:'main', f:'R2'},
+  {c:'KeyU',         l:'U',    col:31, row:3, w:4, z:'main', f:'R2'},
+  {c:'KeyI',         l:'I',    col:35, row:3, w:4, z:'main', f:'R3'},
+  {c:'KeyO',         l:'O',    col:39, row:3, w:4, z:'main', f:'R4'},
+  {c:'KeyP',         l:'P',    col:43, row:3, w:4, z:'main', f:'R5'},
+  {c:'BracketLeft',  t:'{', b:'[', col:47, row:3, w:4, z:'main', f:'R5'},
+  {c:'BracketRight', t:'}', b:']', col:51, row:3, w:4, z:'main', f:'R5'},
+  {c:'Backslash',    t:'|', b:'\\', col:55, row:3, w:6, z:'main', f:'R5'},
+
+  /* 第 4 行：Caps 行 */
+  {c:'CapsLock',   l:'Caps Lock', col:1,  row:4, w:7, z:'main', f:'L5'},
+  {c:'KeyA',       l:'A', col:8,  row:4, w:4, z:'main', f:'L5'},
+  {c:'KeyS',       l:'S', col:12, row:4, w:4, z:'main', f:'L4'},
+  {c:'KeyD',       l:'D', col:16, row:4, w:4, z:'main', f:'L3'},
+  {c:'KeyF',       l:'F', col:20, row:4, w:4, z:'main', f:'L2'},
+  {c:'KeyG',       l:'G', col:24, row:4, w:4, z:'main', f:'L2'},
+  {c:'KeyH',       l:'H', col:28, row:4, w:4, z:'main', f:'R2'},
+  {c:'KeyJ',       l:'J', col:32, row:4, w:4, z:'main', f:'R2'},
+  {c:'KeyK',       l:'K', col:36, row:4, w:4, z:'main', f:'R3'},
+  {c:'KeyL',       l:'L', col:40, row:4, w:4, z:'main', f:'R4'},
+  {c:'Semicolon',  t:':', b:';', col:44, row:4, w:4, z:'main', f:'R5'},
+  {c:'Quote',      t:'"', b:"'", col:48, row:4, w:4, z:'main', f:'R5'},
+  {c:'Enter',      l:'Enter',   col:52, row:4, w:9, z:'main', f:'R5'},
+
+  /* 第 5 行：Shift 行 */
+  {c:'ShiftLeft',  l:'Shift', col:1,  row:5, w:9,  z:'main', f:'L5'},
+  {c:'KeyZ',       l:'Z', col:10, row:5, w:4, z:'main', f:'L5'},
+  {c:'KeyX',       l:'X', col:14, row:5, w:4, z:'main', f:'L4'},
+  {c:'KeyC',       l:'C', col:18, row:5, w:4, z:'main', f:'L3'},
+  {c:'KeyV',       l:'V', col:22, row:5, w:4, z:'main', f:'L2'},
+  {c:'KeyB',       l:'B', col:26, row:5, w:4, z:'main', f:'L2'},
+  {c:'KeyN',       l:'N', col:30, row:5, w:4, z:'main', f:'R2'},
+  {c:'KeyM',       l:'M', col:34, row:5, w:4, z:'main', f:'R2'},
+  {c:'Comma',      t:'<', b:',', col:38, row:5, w:4, z:'main', f:'R3'},
+  {c:'Period',     t:'>', b:'.', col:42, row:5, w:4, z:'main', f:'R4'},
+  {c:'Slash',      t:'?', b:'/', col:46, row:5, w:4, z:'main', f:'R5'},
+  {c:'ShiftRight', l:'Shift', col:50, row:5, w:11, z:'main', f:'R5'},
+
+  /* 第 6 行：Ctrl 行 */
+  {c:'ControlLeft',  l:'Ctrl', col:1,  row:6, w:5, z:'main', f:'L5'},
+  {c:'MetaLeft',     l:'Win',  col:6,  row:6, w:5, z:'main', f:'L5'},
+  {c:'AltLeft',      l:'Alt',  col:11, row:6, w:5, z:'main', f:'L5'},
+  {c:'Space',        l:'',     col:16, row:6, w:25, z:'main', f:'TH'},
+  {c:'AltRight',     l:'Alt',  col:41, row:6, w:5, z:'main', f:'R5'},
+  {c:'MetaRight',    l:'Win',  col:46, row:6, w:5, z:'main', f:'R5'},
+  {c:'ContextMenu',  l:'Menu', col:51, row:6, w:5, z:'main', f:'R5'},
+  {c:'ControlRight', l:'Ctrl', col:56, row:6, w:5, z:'main', f:'R5'},
+
+  /* 编辑键区 */
+  {c:'Insert',    l:'Insert', col:63, row:2, w:4, z:'edit'},
+  {c:'Home',      l:'Home',   col:67, row:2, w:4, z:'edit'},
+  {c:'PageUp',    l:'PgUp',   col:71, row:2, w:4, z:'edit'},
+  {c:'Delete',    l:'Delete', col:63, row:3, w:4, z:'edit'},
+  {c:'End',       l:'End',    col:67, row:3, w:4, z:'edit'},
+  {c:'PageDown',  l:'PgDn',   col:71, row:3, w:4, z:'edit'},
+  {c:'ArrowUp',   l:'↑',      col:67, row:5, w:4, z:'edit'},
+  {c:'ArrowLeft', l:'←',      col:63, row:6, w:4, z:'edit'},
+  {c:'ArrowDown', l:'↓',      col:67, row:6, w:4, z:'edit'},
+  {c:'ArrowRight',l:'→',      col:71, row:6, w:4, z:'edit'},
+
+  /* 小键盘区 */
+  {c:'NumLock',        l:'Num',   col:77, row:2, w:4, z:'num'},
+  {c:'NumpadDivide',   l:'/',     col:81, row:2, w:4, z:'num'},
+  {c:'NumpadMultiply', l:'*',     col:85, row:2, w:4, z:'num'},
+  {c:'NumpadSubtract', l:'-',     col:89, row:2, w:4, z:'num'},
+  {c:'Numpad7',        l:'7',     col:77, row:3, w:4, z:'num'},
+  {c:'Numpad8',        l:'8',     col:81, row:3, w:4, z:'num'},
+  {c:'Numpad9',        l:'9',     col:85, row:3, w:4, z:'num'},
+  {c:'NumpadAdd',      l:'+',     col:89, row:3, w:4, h:2, z:'num'},
+  {c:'Numpad4',        l:'4',     col:77, row:4, w:4, z:'num'},
+  {c:'Numpad5',        l:'5',     col:81, row:4, w:4, z:'num'},
+  {c:'Numpad6',        l:'6',     col:85, row:4, w:4, z:'num'},
+  {c:'Numpad1',        l:'1',     col:77, row:5, w:4, z:'num'},
+  {c:'Numpad2',        l:'2',     col:81, row:5, w:4, z:'num'},
+  {c:'Numpad3',        l:'3',     col:85, row:5, w:4, z:'num'},
+  {c:'NumpadEnter',    l:'Enter', col:89, row:5, w:4, h:2, z:'num'},
+  {c:'Numpad0',        l:'0',     col:77, row:6, w:8, z:'num'},
+  {c:'NumpadDecimal',  l:'.',     col:85, row:6, w:4, z:'num'}
+];
+
+const HOMING_KEYS = ['KeyF', 'KeyJ', 'Numpad5'];
+
+const ZONE_LABELS = [
+  { cls:'zone-fn',   text:'功能键区' },
+  { cls:'zone-main', text:'主键盘区' },
+  { cls:'zone-edit', text:'编辑键区' },
+  { cls:'zone-num',  text:'小键盘区' }
+];
+
+const FINGER_NAME = {
+  L5:'左手小指', L4:'左手无名指', L3:'左手中指', L2:'左手食指',
+  R2:'右手食指', R3:'右手中指', R4:'右手无名指', R5:'右手小指',
+  TH:'大拇指'
+};
+
+const DISPLAY_NAME = {
+  Space:'Space', Backspace:'Backspace', Enter:'Enter', NumpadEnter:'Enter',
+  Tab:'Tab', CapsLock:'CapsLock', ShiftLeft:'Shift', ShiftRight:'Shift',
+  ControlLeft:'Ctrl', ControlRight:'Ctrl', AltLeft:'Alt', AltRight:'Alt',
+  MetaLeft:'Win', MetaRight:'Win', ContextMenu:'Menu',
+  Escape:'Esc', ArrowUp:'↑', ArrowDown:'↓', ArrowLeft:'←', ArrowRight:'→',
+  NumLock:'NumLock', ScrollLock:'ScrollLock', PrintScreen:'PrtSc', Pause:'Pause',
+  Insert:'Insert', Delete:'Delete', Home:'Home', End:'End',
+  PageUp:'PgUp', PageDown:'PgDn'
+};
+
+const LED_DEFS = [
+  { code:'NumLock',    label:'Num Lock'    },
+  { code:'CapsLock',   label:'Caps Lock'   },
+  { code:'ScrollLock', label:'Scroll Lock' }
+];
+
+const esc = s => String(s).replace(/[&<>"']/g, m => (
+  {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]
+));
+
+/* ============================================================
+   全局状态
+   ============================================================ */
+let touchEnabled = true;   /* ★ 点击响应开关 */
+
+/* ============================================================
+   构建键盘
+   ============================================================ */
+const board   = document.getElementById('board');
+const keyEls  = {};
+const keyInfo = {};
+const ledEls  = {};
+const ledItems= {};
+
+function buildBoard(){
+  const frag = document.createDocumentFragment();
+
+  /* 指示灯 */
+  const ledsBox = document.createElement('div');
+  ledsBox.className = 'leds';
+  LED_DEFS.forEach(d => {
+    const item = document.createElement('div');
+    item.className = 'led-item';
+    const dot = document.createElement('span');
+    dot.className = 'led';
+    const lab = document.createElement('span');
+    lab.className = 'led-lab';
+    lab.textContent = d.label;
+    item.appendChild(dot);
+    item.appendChild(lab);
+    ledsBox.appendChild(item);
+    ledEls[d.code]   = dot;
+    ledItems[d.code] = item;
+  });
+  frag.appendChild(ledsBox);
+
+  /* 按键 */
+  LAYOUT.forEach(k => {
+    const el = document.createElement('div');
+    el.className = 'key';
+    el.style.gridColumn = k.col + ' / span ' + k.w;
+    el.style.gridRow    = k.row + ' / span ' + (k.h || 1);
+    el.dataset.code = k.c;
+    if (k.z) el.dataset.zone = k.z;
+    if (k.f) el.dataset.finger = k.f;
+    if (HOMING_KEYS.includes(k.c)) el.classList.add('homing');
+
+    if (k.t !== undefined){
+      el.classList.add('dual');
+      el.innerHTML = '<span class="top">' + esc(k.t) + '</span>' +
+                     '<span class="bot">' + esc(k.b) + '</span>';
+    } else {
+      const label = k.l === '' ? 'Space' : k.l;
+      el.innerHTML = '<span class="lab">' + esc(label) + '</span>';
+      const len = label.length;
+      const fs = Math.min(0.34, (k.w / 4) * 1.12 / Math.max(len, 1));
+      el.style.fontSize = 'calc(var(--u) * ' + fs.toFixed(3) + ')';
+    }
+
+    bindVirtualKey(el, k.c);
+
+    frag.appendChild(el);
+    keyEls[k.c]  = el;
+    keyInfo[k.c] = k;
+  });
+
+  /* 分区名称标签 */
+  ZONE_LABELS.forEach(z => {
+    const el = document.createElement('div');
+    el.className = 'zone-label ' + z.cls;
+    const inner = document.createElement('span');
+    inner.textContent = z.text;
+    el.appendChild(inner);
+    frag.appendChild(el);
+  });
+
+  board.appendChild(frag);
+}
+
+/* ============================================================
+   自适应尺寸
+   ============================================================ */
+function fit(){
+  const wrap    = document.querySelector('.wrap');
+  const header  = document.querySelector('header');
+  const typing  = document.querySelector('.typing-area');
+  const footer  = document.querySelector('footer');
+
+  const padX = 24;
+  const padY = 18;
+  const gaps = 20;
+
+  const availW = wrap.clientWidth  - padX;
+  const availH = wrap.clientHeight - padY
+               - header.offsetHeight - typing.offsetHeight - footer.offsetHeight
+               - gaps;
+
+  let u = Math.min(availW / 23, availH / 6);
+  u = Math.max(30, Math.min(u, 160));
+  document.documentElement.style.setProperty('--u', u.toFixed(2) + 'px');
+}
+
+/* ============================================================
+   音效
+   ============================================================ */
+let audioCtx    = null;
+let masterGain  = null;
+let noiseBuffer = null;
+let soundOn     = true;
+
+function initAudio(){
+  if (audioCtx){
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return null;
+  audioCtx = new AC();
+  masterGain = audioCtx.createGain();
+  masterGain.gain.value = 0.85;
+  masterGain.connect(audioCtx.destination);
+
+  const dur = 0.06;
+  const len = Math.ceil(audioCtx.sampleRate * dur);
+  noiseBuffer = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+  const d = noiseBuffer.getChannelData(0);
+  for (let i = 0; i < len; i++){
+    d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.2);
+  }
+  return audioCtx;
+}
+
+function playKeySound(type){
+  if (!soundOn) return;
+  const ctx = initAudio();
+  if (!ctx) return;
+  const t = ctx.currentTime + 0.001;
+
+  const src = ctx.createBufferSource();
+  src.buffer = noiseBuffer;
+  const bp = ctx.createBiquadFilter();
+  bp.type = 'bandpass';
+  bp.frequency.value = type === 'space' ? 1100 : (type === 'lock' ? 3200 : 2400);
+  bp.Q.value = 0.8;
+  const ng = ctx.createGain();
+  ng.gain.value = type === 'space' ? 0.10 : 0.14;
+  src.connect(bp); bp.connect(ng); ng.connect(masterGain);
+  src.start(t);
+
+  const osc = ctx.createOscillator();
+  osc.type = 'triangle';
+  const base = type === 'space' ? 130 : (type === 'lock' ? 400 : 220);
+  osc.frequency.setValueAtTime(base, t);
+  osc.frequency.exponentialRampToValueAtTime(base * 0.55, t + 0.045);
+  const og = ctx.createGain();
+  og.gain.setValueAtTime(0.0001, t);
+  og.gain.exponentialRampToValueAtTime(type === 'space' ? 0.10 : 0.07, t + 0.004);
+  og.gain.exponentialRampToValueAtTime(0.0001, t + 0.055);
+  osc.connect(og); og.connect(masterGain);
+  osc.start(t);
+  osc.stop(t + 0.07);
+}
+
+/* ============================================================
+   锁定键 + 指示灯
+   ============================================================ */
+const lockState = { CapsLock:false, NumLock:true, ScrollLock:false };
+
+const badgeShift = document.getElementById('badgeShift');
+const badgeCaps  = document.getElementById('badgeCaps');
+
+function setLock(code, on){
+  lockState[code] = on;
+  const key = keyEls[code];
+  if (key) key.classList.toggle('locked', on);
+  const dot  = ledEls[code];
+  const item = ledItems[code];
+  if (dot)  dot.classList.toggle('on', on);
+  if (item) item.classList.toggle('on', on);
+  if (code === 'CapsLock' && badgeCaps) badgeCaps.classList.toggle('on', on);
+}
+function toggleLock(code){ setLock(code, !lockState[code]); }
+function initLocks(){ Object.keys(lockState).forEach(c => setLock(c, lockState[c])); }
+
+/* ============================================================
+   Shift 状态
+   ============================================================ */
+let shiftDown    = false;
+let virtualShift = false;
+
+function updateShiftVisual(){
+  const on = shiftDown || virtualShift;
+  document.body.classList.toggle('shift-on', on);
+  if (badgeShift) badgeShift.classList.toggle('on', on);
+}
+
+function setShift(on){
+  if (shiftDown === on) return;
+  shiftDown = on;
+  updateShiftVisual();
+}
+
+/* ============================================================
+   “输入的文字”显示区
+   ============================================================ */
+const typingEl = document.getElementById('typingText');
+let typed = '';
+
+function updateTyping(){
+  typingEl.textContent = typed;
+  requestAnimationFrame(() => {
+    typingEl.scrollLeft = typingEl.scrollWidth;
+  });
+}
+
+function appendTyped(ch){
+  typed += ch;
+  if (typed.length > 200) typed = typed.slice(-200);
+  updateTyping();
+}
+
+/* ============================================================
+   底部状态栏
+   ============================================================ */
+const bigKey    = document.getElementById('bigKey');
+const outCode   = document.getElementById('outCode');
+const outKey    = document.getElementById('outKey');
+const outFinger = document.getElementById('outFinger');
+
+const LOCK_CODES = ['CapsLock','NumLock','ScrollLock'];
+
+function fingerFor(code){
+  const info = keyInfo[code];
+  if (info && info.f) return FINGER_NAME[info.f] || null;
+  if (code === 'Space') return '大拇指';
+  if (LOCK_CODES.includes(code) || code === 'Backspace' ||
+      code === 'Enter' || code === 'NumpadEnter') return '右手小指';
+  return null;
+}
+
+function updateStatus(name, code, keyLabel){
+  bigKey.textContent  = name  || '—';
+  outCode.textContent = code  || '—';
+  outKey.textContent  = keyLabel || '—';
+  const f = fingerFor(code);
+  if (f){
+    outFinger.textContent = f;
+    outFinger.style.color = '#7dd3fc';
+  } else {
+    outFinger.textContent = '—';
+    outFinger.style.color = '#5b6b84';
+  }
+}
+
+function displayName(e){
+  if (DISPLAY_NAME[e.code]) return DISPLAY_NAME[e.code];
+  const k = e.key;
+  if (k === ' ') return 'Space';
+  if (k && k.length === 1) return k;
+  const info = keyInfo[e.code];
+  if (info){
+    if (info.l !== undefined) return info.l === '' ? 'Space' : info.l;
+    return info.b;
+  }
+  return k || e.code;
+}
+
+/* ============================================================
+   虚拟按键：根据 Shift / Caps 计算实际输出
+   ============================================================ */
+function currentShift(){
+  return virtualShift || shiftDown;
+}
+
+function virtualOutput(code){
+  if (code === 'Space') return ' ';
+  if (code === 'Enter' || code === 'NumpadEnter') return '↵';
+  if (code === 'Tab') return '⇥';
+  if (code === 'Backspace') return '__BACK__';
+
+  const info = keyInfo[code];
+  if (!info) return null;
+
+  const shift = currentShift();
+  const caps  = lockState.CapsLock;
+
+  if (info.t !== undefined) return shift ? info.t : info.b;
+
+  if (info.l && /^[A-Za-z]$/.test(info.l)){
+    const upper = shift ? !caps : caps;
+    return upper ? info.l.toUpperCase() : info.l.toLowerCase();
+  }
+
+  if (info.l !== undefined && info.l !== '') return info.l;
+
+  return null;
+}
+
+function virtualDisplayName(code){
+  if (DISPLAY_NAME[code]) return DISPLAY_NAME[code];
+  const info = keyInfo[code];
+  if (!info) return code;
+
+  const shift = currentShift();
+  const caps  = lockState.CapsLock;
+
+  if (info.t !== undefined) return shift ? info.t : info.b;
+  if (info.l && /^[A-Za-z]$/.test(info.l)){
+    const upper = shift ? !caps : caps;
+    return upper ? info.l.toUpperCase() : info.l.toLowerCase();
+  }
+  if (info.l !== undefined && info.l !== '') return info.l;
+  return code;
+}
+
+const virtualPressed = new Set();
+
+function bindVirtualKey(el, code){
+  el.addEventListener('pointerdown', ev => {
+    if (!touchEnabled) return;                             /* ★ 开关 */
+    if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+    ev.preventDefault();
+    if (virtualPressed.has(code)) return;
+    virtualPressed.add(code);
+    virtualPress(code);
+  });
+
+  const release = () => {
+    if (!virtualPressed.has(code)) return;
+    virtualPressed.delete(code);
+    virtualRelease(code);
+  };
+
+  el.addEventListener('pointerup', ev => { ev.preventDefault(); release(); });
+  el.addEventListener('pointercancel', release);
+  el.addEventListener('pointerleave', release);
+}
+
+function virtualPress(code){
+  /* Shift：切换式 */
+  if (code === 'ShiftLeft' || code === 'ShiftRight'){
+    virtualShift = !virtualShift;
+    updateShiftVisual();
+    ['ShiftLeft','ShiftRight'].forEach(c => {
+      const k = keyEls[c];
+      if (k) k.classList.toggle('active', virtualShift);
+    });
+    playKeySound('normal');
+    updateStatus('Shift', code, 'Shift');
+    return;
+  }
+
+  const el = keyEls[code];
+  if (el) el.classList.add('active');
+
+  if (LOCK_CODES.includes(code)){
+    toggleLock(code);
+    playKeySound('lock');
+    updateStatus(DISPLAY_NAME[code] || code, code, DISPLAY_NAME[code] || code);
+    return;
+  }
+
+  playKeySound(code === 'Space' ? 'space' : 'normal');
+
+  const out = virtualOutput(code);
+  if (out === '__BACK__'){
+    typed = typed.slice(0, -1);
+    updateTyping();
+  } else if (out !== null && out !== undefined){
+    appendTyped(out);
+  }
+
+  const name = virtualDisplayName(code);
+  updateStatus(name, code, name);
+}
+
+function virtualRelease(code){
+  if (code === 'ShiftLeft' || code === 'ShiftRight') return;
+  const el = keyEls[code];
+  if (el) el.classList.remove('active');
+}
+
+/* 兜底：全局 pointerup 清掉所有未释放的虚拟按下 */
+document.addEventListener('pointerup', () => {
+  virtualPressed.forEach(code => {
+    virtualPressed.delete(code);
+    virtualRelease(code);
+  });
+});
+
+/* 如果点击响应被关闭时正好有虚拟键按下，清掉高亮 */
+function clearVirtualPresses(){
+  virtualPressed.forEach(code => {
+    if (code === 'ShiftLeft' || code === 'ShiftRight') return;
+    const el = keyEls[code];
+    if (el) el.classList.remove('active');
+  });
+  virtualPressed.clear();
+}
+
+/* ============================================================
+   实体按键事件
+   ============================================================ */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Shift') setShift(true);
+
+  const el = keyEls[e.code];
+  if (el) el.classList.add('active');
+
+  if (LOCK_CODES.includes(e.code)){
+    if (!e.repeat){
+      toggleLock(e.code);
+      playKeySound('lock');
+    }
+  } else if (!e.repeat){
+    playKeySound(e.code === 'Space' ? 'space' : 'normal');
+  }
+
+  if (el && !e.ctrlKey && !e.altKey && !e.metaKey &&
+      e.code !== 'F5' && e.code !== 'F11' && e.code !== 'F12'){
+    e.preventDefault();
+  }
+
+  if (!e.repeat && !e.ctrlKey && !e.altKey && !e.metaKey){
+    const k = e.key;
+    if (k === 'Backspace'){
+      typed = typed.slice(0, -1);
+      updateTyping();
+    } else if (k === 'Enter'){
+      appendTyped('↵');
+    } else if (k === 'Tab'){
+      appendTyped('⇥');
+    } else if (k === ' '){
+      appendTyped(' ');
+    } else if (k && k.length === 1){
+      appendTyped(k);
+    }
+  }
+
+  const name = displayName(e);
+  updateStatus(name, e.code, e.key === ' ' ? 'Space' : e.key);
+});
+
+document.addEventListener('keyup', e => {
+  if (e.key === 'Shift') setShift(false);
+  const el = keyEls[e.code];
+  if (el) el.classList.remove('active');
+});
+
+window.addEventListener('blur', () => {
+  Object.values(keyEls).forEach(el => el.classList.remove('active'));
+  setShift(false);
+  virtualPressed.clear();
+});
+
+/* ============================================================
+   工具按钮
+   ============================================================ */
+
+/* ★ 点击响应开关 */
+document.getElementById('btnTouch').addEventListener('click', function(){
+  this.blur();
+  touchEnabled = !touchEnabled;
+  this.classList.toggle('on', touchEnabled);
+  this.textContent = touchEnabled ? '👆 点击响应' : '🚫 点击关闭';
+  if (!touchEnabled) clearVirtualPresses();
+});
+
+document.getElementById('btnZone').addEventListener('click', function(){
+  this.blur();
+  document.body.classList.toggle('zone-mode');
+  this.classList.toggle('on');
+  if (document.body.classList.contains('zone-mode')) document.body.classList.remove('finger-mode');
+  document.getElementById('btnFinger').classList.remove('on');
+});
+
+document.getElementById('btnFinger').addEventListener('click', function(){
+  this.blur();
+  document.body.classList.toggle('finger-mode');
+  this.classList.toggle('on');
+  if (document.body.classList.contains('finger-mode')) document.body.classList.remove('zone-mode');
+  document.getElementById('btnZone').classList.remove('on');
+});
+
+document.getElementById('btnSound').addEventListener('click', function(){
+  this.blur();
+  soundOn = !soundOn;
+  this.textContent = soundOn ? '🔊 音效开' : '🔇 音效关';
+  this.classList.toggle('on', !soundOn);
+  if (soundOn) playKeySound('normal');
+});
+
+document.getElementById('btnFull').addEventListener('click', function(){
+  this.blur();
+  if (!document.fullscreenElement){
+    document.documentElement.requestFullscreen().catch(()=>{});
+  } else {
+    document.exitFullscreen();
+  }
+});
+
+document.getElementById('btnClear').addEventListener('click', function(){
+  this.blur();
+  typed = '';
+  updateTyping();
+  bigKey.textContent = '—';
+  outCode.textContent = '—';
+  outKey.textContent = '—';
+  outFinger.textContent = '—';
+  outFinger.style.color = '#5b6b84';
+  Object.values(keyEls).forEach(el => el.classList.remove('active'));
+  virtualShift = false;
+  updateShiftVisual();
+  ['ShiftLeft','ShiftRight'].forEach(c => {
+    const k = keyEls[c];
+    if (k) k.classList.remove('active');
+  });
+  virtualPressed.clear();
+});
+
+/* ============================================================
+   启动
+   ============================================================ */
+buildBoard();
+initLocks();
+updateTyping();
+updateShiftVisual();
+fit();
+window.addEventListener('resize', fit);
+window.addEventListener('orientationchange', fit);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+setTimeout(fit, 120);
+</script>
+</body>
+</html>
